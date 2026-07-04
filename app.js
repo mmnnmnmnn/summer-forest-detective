@@ -1,12 +1,15 @@
 const app = document.getElementById("app");
 const STORAGE_KEY = "summerForestDetectiveProgress_v2";
+const PHOTO_UPLOAD_URL = "https://script.google.com/macros/s/AKfycbzSVkKJkZi27yPD6sDqWIMRBySEgJxiZHhd5eeN9iVV9jGrHoGVt4WW0WOYaKx3gWML/exec";
+const PHOTO_MAX_WIDTH = 1400;
+const PHOTO_JPEG_QUALITY = 0.82;
 
 let selectedChoice = null;
 let currentPhotoData = null;
 
 function getProgress() {
   const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) return { teamName: "", completed: [], hasSeenGuide: false, completedAt: "" };
+  if (!saved) return { teamName: "", completed: [], hasSeenGuide: false, completedAt: "", photoUploads: {} };
 
   try {
     const parsed = JSON.parse(saved);
@@ -14,10 +17,11 @@ function getProgress() {
       teamName: parsed.teamName || "",
       completed: Array.isArray(parsed.completed) ? parsed.completed : [],
       hasSeenGuide: Boolean(parsed.hasSeenGuide),
-      completedAt: parsed.completedAt || ""
+      completedAt: parsed.completedAt || "",
+      photoUploads: parsed.photoUploads || {}
     };
   } catch {
-    return { teamName: "", completed: [], hasSeenGuide: false, completedAt: "" };
+    return { teamName: "", completed: [], hasSeenGuide: false, completedAt: "", photoUploads: {} };
   }
 }
 
@@ -113,6 +117,12 @@ function renderMain() {
       </div>
 
       ${renderProgressBlock()}
+
+      <div class="card notice-card">
+        <h2>사진 저장 안내</h2>
+        <p class="small-text">사진 미션에서 촬영한 이미지는 행사 운영 기록 및 과학관 아카이브용으로 Google Drive에 저장됩니다.</p>
+        <p class="small-text"><strong>사람 얼굴이 나오지 않도록</strong> 자연물, 곤충, 식물, 풍경 위주로 촬영해주세요.</p>
+      </div>
 
       <div class="card">
         <label for="teamName">탐험대 이름</label>
@@ -389,28 +399,81 @@ function handlePhotoUpload(event, stationId) {
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    currentPhotoData = e.target.result;
-    previewArea.innerHTML = `<div class="photo-confirm-box"><img src="${currentPhotoData}" alt="사진 미션 미리보기" /></div>`;
-    photoDoneMessage.innerHTML = `
-      <div class="photo-done-box pop">
-        <div class="big-icon">🔎</div>
-        <h2>증거 사진 확인 완료!</h2>
-        <p>숲의 단서가 탐정 기록에 남았습니다.</p>
-      </div>
-    `;
-    completeBtn.disabled = false;
-  };
-  reader.readAsDataURL(file);
+  resizeImageFile(file, PHOTO_MAX_WIDTH, PHOTO_JPEG_QUALITY)
+    .then(function(resizedDataUrl) {
+      currentPhotoData = resizedDataUrl;
+      previewArea.innerHTML = `<div class="photo-confirm-box"><img src="${currentPhotoData}" alt="사진 미션 미리보기" /></div>`;
+      photoDoneMessage.innerHTML = `
+        <div class="photo-done-box pop">
+          <div class="big-icon">🔎</div>
+          <h2>증거 사진 확인 완료!</h2>
+          <p>숲의 단서가 탐정 기록에 남았습니다.</p>
+          <p class="small-text center">미션 완료 시 사진이 과학관 아카이브에 저장됩니다.</p>
+        </div>
+      `;
+      completeBtn.disabled = false;
+    })
+    .catch(function() {
+      currentPhotoData = null;
+      completeBtn.disabled = true;
+      photoDoneMessage.innerHTML = `<div class="warning-box">사진을 불러오지 못했습니다. 다시 촬영해주세요.</div>`;
+    });
 }
 
-function completeMission(stationId) {
+async function completeMission(stationId) {
   if (!currentPhotoData) return;
+
+  const mission = MISSIONS.find(item => item.id === stationId);
   const progress = getProgress();
+  const completeBtn = document.getElementById("completeMissionBtn");
+  const photoDoneMessage = document.getElementById("photoDoneMessage");
+
+  if (completeBtn) {
+    completeBtn.disabled = true;
+    completeBtn.textContent = "사진 저장 중...";
+  }
+
+  if (photoDoneMessage) {
+    photoDoneMessage.innerHTML = `
+      <div class="photo-done-box">
+        <div class="big-icon">⏳</div>
+        <h2>사진을 아카이브에 저장 중입니다</h2>
+        <p>잠시만 기다려주세요.</p>
+      </div>
+    `;
+  }
+
+  const uploadResult = await uploadPhotoToDrive({
+    imageBase64: currentPhotoData,
+    missionId: mission.id,
+    missionTitle: mission.title,
+    teamName: progress.teamName || "미입력",
+    createdAt: new Date().toISOString()
+  });
+
+  if (!uploadResult.ok) {
+    if (photoDoneMessage) {
+      photoDoneMessage.innerHTML = `
+        <div class="warning-box">
+          사진 저장 요청에 실패했습니다. 인터넷 연결을 확인한 뒤 다시 시도해주세요.
+        </div>
+      `;
+    }
+    if (completeBtn) {
+      completeBtn.disabled = false;
+      completeBtn.textContent = "사건 해결 완료하기";
+    }
+    return;
+  }
 
   if (!progress.completed.includes(stationId)) progress.completed.push(stationId);
   progress.completed.sort((a, b) => a - b);
+
+  progress.photoUploads = progress.photoUploads || {};
+  progress.photoUploads[stationId] = {
+    status: uploadResult.status || "sent",
+    uploadedAt: formatDateTime(new Date())
+  };
 
   if (progress.completed.length === MISSIONS.length && !progress.completedAt) {
     progress.completedAt = formatDateTime(new Date());
@@ -484,6 +547,58 @@ function renderFinalScreen() {
     </section>
   `;
   launchConfetti();
+}
+
+function resizeImageFile(file, maxWidth, quality) {
+  return new Promise(function(resolve, reject) {
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+      const img = new Image();
+
+      img.onload = function() {
+        const scale = Math.min(1, maxWidth / img.width);
+        const width = Math.round(img.width * scale);
+        const height = Math.round(img.height * scale);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+
+      img.onerror = reject;
+      img.src = event.target.result;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadPhotoToDrive(payload) {
+  if (!PHOTO_UPLOAD_URL || PHOTO_UPLOAD_URL.includes("여기에")) {
+    return { ok: false, message: "PHOTO_UPLOAD_URL이 설정되지 않았습니다." };
+  }
+
+  try {
+    await fetch(PHOTO_UPLOAD_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    return { ok: true, status: "sent" };
+  } catch (error) {
+    return { ok: false, message: error.message };
+  }
 }
 
 function goHome() {
