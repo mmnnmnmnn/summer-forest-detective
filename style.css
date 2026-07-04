@@ -388,3 +388,25 @@ input[type="text"]:focus { border-color: #4CAF50; }
   font-weight: 800;
   line-height: 1.5;
 }
+
+
+/* v3.0 UX updates: optional photo mission */
+.optional-label {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #fffbea;
+  color: #4CAF50;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.secondary-btn.subtle {
+  background: #f6f1de;
+  color: #66715f;
+}
+
+.photo-mission-box .small-text {
+  margin-top: 10px;
+}

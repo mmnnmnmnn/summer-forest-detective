@@ -120,8 +120,8 @@ function renderMain() {
 
       <div class="card notice-card">
         <h2>사진 저장 안내</h2>
-        <p class="small-text">사진 미션에서 촬영한 이미지는 행사 운영 기록 및 과학관 아카이브용으로 Google Drive에 저장됩니다.</p>
-        <p class="small-text"><strong>사람 얼굴이 나오지 않도록</strong> 자연물, 곤충, 식물, 풍경 위주로 촬영해주세요.</p>
+        <p class="small-text">사진 미션은 선택 참여입니다. 사진을 촬영한 경우에만 행사 운영 기록 및 과학관 아카이브용으로 Google Drive에 저장됩니다.</p>
+        <p class="small-text"><strong>사진 참여 시 사람 얼굴이 나오지 않도록</strong> 자연물, 곤충, 식물, 풍경 위주로 촬영해주세요.</p>
       </div>
 
       <div class="card">
@@ -166,7 +166,7 @@ function renderFirstGuide(targetStation = null, forceIntro = false) {
         <div class="badge">처음 오셨나요?</div>
         <h1>여름숲탐정본부</h1>
         <p class="subtitle">암호를 해독하라</p>
-        <p class="desc">생태공원에 숨겨진 6개의 QR코드를 찾아 사건을 해결하세요. 퀴즈를 맞히고 증거 사진을 남기면 암호 글자를 얻을 수 있습니다.</p>
+        <p class="desc">생태공원에 숨겨진 6개의 QR코드를 찾아 사건을 해결하세요. 퀴즈를 맞히면 암호 글자를 얻을 수 있고, 증거 사진은 선택으로 남길 수 있습니다.</p>
         ${targetStation ? `
           <div class="guide-notice">
             <strong>${forceIntro ? "첫 번째 QR 확인 완료" : "QR 확인 완료"}</strong><br />
@@ -181,7 +181,7 @@ function renderFirstGuide(targetStation = null, forceIntro = false) {
           <div><strong>1</strong><span>QR코드를 찾습니다.</span></div>
           <div><strong>2</strong><span>사건 이야기를 읽고 퀴즈를 풉니다.</span></div>
           <div><strong>3</strong><span>정답을 맞히면 암호 글자를 얻습니다.</span></div>
-          <div><strong>4</strong><span>증거 사진을 찍고 미션을 완료합니다.</span></div>
+          <div><strong>4</strong><span>증거 사진은 선택으로 남길 수 있습니다.</span></div>
           <div><strong>5</strong><span>6개 암호를 모아 직원에게 보여주세요.</span></div>
         </div>
       </div>
@@ -342,7 +342,8 @@ function checkAnswer(stationId) {
         <h2>정답입니다!</h2>
         <p>탐정님이 사건의 핵심 단서를 찾아냈어요.</p>
         <div class="code-reveal">암호 글자<strong>${mission.code}</strong></div>
-        <button class="primary-btn" onclick="renderPhotoMission(${mission.id})">증거 사진 남기기</button>
+        <button class="primary-btn" onclick="completeMissionWithoutPhoto(${mission.id})">사진 없이 사건 완료하기</button>
+        <button class="secondary-btn" onclick="renderPhotoMission(${mission.id})">증거 사진 남기기 <span class="optional-label">선택</span></button>
       </div>
     `;
     launchConfetti();
@@ -367,20 +368,22 @@ function renderPhotoMission(stationId) {
     <section class="screen">
       ${renderProgressBlock()}
       <div class="case-card">
-        <div class="badge">증거 사진 미션</div>
+        <div class="badge">증거 사진 미션 · 선택</div>
         <h1>${mission.title}</h1>
         <div class="photo-mission-box">
           <div class="big-icon">📷</div>
-          <h2>증거를 확보하세요</h2>
+          <h2>증거 사진을 남길까요?</h2>
           <p>${mission.photoMission}</p>
+          <p class="small-text center">사진 미션은 선택입니다. 사진 없이도 사건을 완료할 수 있습니다.</p>
         </div>
         <label class="camera-btn">카메라로 사진 찍기
           <input type="file" accept="image/*" capture="environment" onchange="handlePhotoUpload(event, ${mission.id})" />
         </label>
         <div id="photoPreviewArea" class="photo-preview-area"><p class="small-text">사진을 찍으면 이곳에 미리보기가 나타납니다.</p></div>
         <div id="photoDoneMessage"></div>
-        <button class="primary-btn" id="completeMissionBtn" onclick="completeMission(${mission.id})" disabled>사건 해결 완료하기</button>
-        <button class="secondary-btn" onclick="startMission(${mission.id})">퀴즈로 돌아가기</button>
+        <button class="primary-btn" id="completeMissionBtn" onclick="completeMission(${mission.id})" disabled>사진 저장하고 사건 완료하기</button>
+        <button class="secondary-btn" onclick="completeMissionWithoutPhoto(${mission.id})">사진 없이 사건 완료하기</button>
+        <button class="secondary-btn subtle" onclick="startMission(${mission.id})">퀴즈로 돌아가기</button>
       </div>
     </section>
   `;
@@ -455,35 +458,55 @@ async function completeMission(stationId) {
     if (photoDoneMessage) {
       photoDoneMessage.innerHTML = `
         <div class="warning-box">
-          사진 저장 요청에 실패했습니다. 인터넷 연결을 확인한 뒤 다시 시도해주세요.
+          사진 저장 요청에 실패했습니다. 인터넷 연결을 확인한 뒤 다시 시도하거나, 사진 없이 사건을 완료할 수 있습니다.
         </div>
       `;
     }
     if (completeBtn) {
       completeBtn.disabled = false;
-      completeBtn.textContent = "사건 해결 완료하기";
+      completeBtn.textContent = "사진 저장하고 사건 완료하기";
     }
     return;
   }
 
-  if (!progress.completed.includes(stationId)) progress.completed.push(stationId);
+  markMissionCompleted(stationId, {
+    photoStatus: uploadResult.status || "sent",
+    uploadedAt: formatDateTime(new Date())
+  });
+}
+
+function completeMissionWithoutPhoto(stationId) {
+  markMissionCompleted(stationId, {
+    photoStatus: "skipped",
+    uploadedAt: ""
+  });
+}
+
+function markMissionCompleted(stationId, photoInfo = {}) {
+  const progress = getProgress();
+
+  if (!progress.completed.includes(stationId)) {
+    progress.completed.push(stationId);
+  }
   progress.completed.sort((a, b) => a - b);
 
   progress.photoUploads = progress.photoUploads || {};
   progress.photoUploads[stationId] = {
-    status: uploadResult.status || "sent",
-    uploadedAt: formatDateTime(new Date())
+    status: photoInfo.photoStatus || "skipped",
+    uploadedAt: photoInfo.uploadedAt || ""
   };
 
   if (progress.completed.length === MISSIONS.length && !progress.completedAt) {
     progress.completedAt = formatDateTime(new Date());
   }
+
   saveProgress(progress);
 
   if (isAllCompleted()) {
     renderFinalScreen();
     return;
   }
+
   renderMissionComplete(stationId);
 }
 
@@ -498,7 +521,7 @@ function renderMissionComplete(stationId) {
         <div class="big-icon">🕵️‍♀️</div>
         <div class="badge">사건 해결</div>
         <h1>${mission.title}</h1>
-        <p class="desc">사건 기록이 저장되었습니다.</p>
+        <p class="desc">사건 해결 기록이 저장되었습니다.</p>
         <div class="code-reveal">획득한 암호<strong>${mission.code}</strong></div>
         ${nextMission ? `
           <div class="next-box next-qr-box">
