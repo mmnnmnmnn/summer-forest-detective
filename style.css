@@ -336,3 +336,41 @@ input[type="text"]:focus { border-color: #4CAF50; }
   0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
   100% { transform: translateY(105vh) rotate(260deg); opacity: 0; }
 }
+
+
+/* v2.1 UX updates */
+.guide-notice,
+.warning-box,
+.location-hint {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  line-height: 1.55;
+}
+
+.guide-notice {
+  background: #fffbea;
+  color: #2e6b34;
+  font-weight: 800;
+}
+
+.warning-box {
+  background: #fff0ea;
+  color: #70412f;
+  font-weight: 900;
+  text-align: center;
+}
+
+.next-qr-box {
+  border: 2px dashed #8BC34A;
+}
+
+.location-hint {
+  background: #f1f8e9;
+  color: #2e6b34;
+  font-weight: 900;
+}
+
+.center {
+  text-align: center;
+}

@@ -50,10 +50,23 @@ function getNextMission(currentId) {
 
 function render() {
   const station = getStationFromUrl();
+  const progress = getProgress();
+
+  if (station === 1 && !isAllCompleted()) {
+    renderFirstGuide(1, true);
+    return;
+  }
+
   if (station) {
+    if (!progress.hasSeenGuide && !isAllCompleted()) {
+      renderFirstGuide(station, false);
+      return;
+    }
+
     renderStationIntro(station);
     return;
   }
+
   renderMain();
 }
 
@@ -134,7 +147,8 @@ function renderMain() {
   `;
 }
 
-function renderFirstGuide() {
+function renderFirstGuide(targetStation = null, forceIntro = false) {
+  const progress = getProgress();
   app.innerHTML = `
     <section class="screen">
       <div class="hero-card guide-card">
@@ -143,6 +157,12 @@ function renderFirstGuide() {
         <h1>여름숲탐정본부</h1>
         <p class="subtitle">암호를 해독하라</p>
         <p class="desc">생태공원에 숨겨진 6개의 QR코드를 찾아 사건을 해결하세요. 퀴즈를 맞히고 증거 사진을 남기면 암호 글자를 얻을 수 있습니다.</p>
+        ${targetStation ? `
+          <div class="guide-notice">
+            <strong>${forceIntro ? "첫 번째 QR 확인 완료" : "QR 확인 완료"}</strong><br />
+            탐험대 이름을 입력하면 방금 찾은 CASE ${targetStation} 사건으로 이동합니다.
+          </div>
+        ` : ""}
       </div>
 
       <div class="card">
@@ -158,19 +178,37 @@ function renderFirstGuide() {
 
       <div class="card">
         <label for="teamName">탐험대 이름</label>
-        <input id="teamName" type="text" placeholder="예: 초록나비 탐험대" />
-        <button class="primary-btn pulse" onclick="startFirstGuide()">탐험 시작하기</button>
+        <input id="teamName" type="text" placeholder="예: 초록나비 탐험대" value="${escapeHtml(progress.teamName || "")}" />
+        <button class="primary-btn pulse" onclick="startFirstGuide(${targetStation || null})">탐험 시작하기</button>
+        <div id="guideMessage"></div>
       </div>
     </section>
   `;
 }
 
-function startFirstGuide() {
+function startFirstGuide(targetStation = null) {
   const input = document.getElementById("teamName");
   const progress = getProgress();
-  progress.teamName = input.value.trim();
+  const teamName = input.value.trim();
+
+  if (!teamName) {
+    input.focus();
+    const messageArea = document.getElementById("guideMessage");
+    if (messageArea) {
+      messageArea.innerHTML = `<div class="warning-box">탐험대 이름을 입력해 주세요.</div>`;
+    }
+    return;
+  }
+
+  progress.teamName = teamName;
   progress.hasSeenGuide = true;
   saveProgress(progress);
+
+  if (targetStation) {
+    renderStationIntro(targetStation);
+    return;
+  }
+
   renderMain();
 }
 
@@ -227,16 +265,17 @@ function renderAlreadyCompletedBlock(mission) {
       <div class="code-reveal small">획득한 암호<strong>${mission.code}</strong></div>
     </div>
     ${nextMission ? `
-      <div class="next-box">
-        <h2>다음 사건 안내</h2>
-        <p>아직 해결하지 않은 QR을 찾아보세요.</p>
+      <div class="next-box next-qr-box">
+        <h2>다음 QR 안내</h2>
+        <p>이 사건은 이미 해결했어요. 아직 해결하지 않은 다음 QR을 찾아가면 됩니다.</p>
         <p class="next-title">👉 ${nextMission.caseLabel} ${nextMission.title}</p>
-        <p>${nextMission.zone} 주변에서 다음 단서를 찾아보세요.</p>
+        <p class="location-hint">📍 ${nextMission.zone} 주변에서 다음 단서를 찾아보세요.</p>
+        <p class="small-text">QR을 스캔하면 다음 사건 화면이 열립니다.</p>
       </div>
     ` : `
-      <div class="next-box">
+      <div class="next-box next-qr-box">
         <h2>모든 사건 해결 완료</h2>
-        <p>최종 암호 화면을 직원에게 보여주세요.</p>
+        <p>최종 암호 화면을 열고, 화면을 캡쳐한 뒤 기념품 교환 시 보여주세요.</p>
       </div>
     `}
     <button class="primary-btn" onclick="${nextMission ? "goHome()" : "renderFinalScreen()"}">${nextMission ? "진행상황 보기" : "최종 암호 보기"}</button>
@@ -399,15 +438,16 @@ function renderMissionComplete(stationId) {
         <p class="desc">사건 기록이 저장되었습니다.</p>
         <div class="code-reveal">획득한 암호<strong>${mission.code}</strong></div>
         ${nextMission ? `
-          <div class="next-box">
+          <div class="next-box next-qr-box">
             <h2>다음 QR 안내</h2>
             <p>${mission.nextGuide}</p>
             <p class="next-title">다음 목표: ${nextMission.caseLabel} ${nextMission.title}</p>
+            <p class="location-hint">📍 ${nextMission.zone} 주변에서 QR을 찾아보세요.</p>
           </div>
         ` : `
-          <div class="next-box">
+          <div class="next-box next-qr-box">
             <h2>모든 사건 해결 완료</h2>
-            <p>최종 암호 화면을 확인하세요.</p>
+            <p>최종 암호 화면을 캡쳐한 뒤 기념품 교환 시 보여주세요.</p>
           </div>
         `}
         <button class="primary-btn" onclick="${nextMission ? "goHome()" : "renderFinalScreen()"}">${nextMission ? "진행상황 보기" : "최종 암호 보기"}</button>
@@ -438,8 +478,8 @@ function renderFinalScreen() {
         </div>
         <div class="final-code-box">최종 암호<strong>${finalCode}</strong></div>
         <div class="time-box">완료 시각<br /><strong>${progress.completedAt}</strong></div>
-        <div class="staff-box">직원에게<br />이 화면을 보여주세요.</div>
-        <p class="small-text center">기념품 교환 전까지 이 화면을 닫지 마세요.</p>
+        <div class="staff-box">기념품 교환 시<br />이 화면을 보여주세요.</div>
+        <p class="small-text center">화면을 캡쳐한 뒤, 기념품 교환 시 보여주세요.</p>
       </div>
     </section>
   `;
