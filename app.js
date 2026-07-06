@@ -11,6 +11,7 @@ const ASSETS = {
   passwordCard: "assets/password-card.png",
   photoFrame: "assets/photo-frame.png",
   caseCards: [null, "assets/case01.png", "assets/case02.png", "assets/case03.png", "assets/case04.png", "assets/case05.png", "assets/case06.png"],
+  codeCards: [null, "assets/code01.png", "assets/code02.png", "assets/code03.png", "assets/code04.png", "assets/code05.png", "assets/code06.png"],
   icons: {
     home: "assets/icon-home.png",
     back: "assets/icon-back.png",
@@ -118,6 +119,10 @@ function renderProgressBlock() {
 
 function getCaseCardImage(id) {
   return ASSETS.caseCards[id] || "";
+}
+
+function getCodeCardImage(id) {
+  return ASSETS.codeCards[id] || ASSETS.passwordCard;
 }
 
 function renderImageIcon(src, alt = "") {
@@ -300,7 +305,7 @@ function renderAlreadyCompletedBlock(mission) {
       <div class="big-icon">✅</div>
       <h2>이미 해결한 사건입니다</h2>
       <p>탐정 기록을 확인했습니다.</p>
-      <div class="code-reveal small code-asset"><img src="${ASSETS.passwordCard}" alt="암호 카드" /><span>획득한 암호</span><strong>${mission.code}</strong></div>
+      <div class="code-reveal small code-asset"><img src="${getCodeCardImage(mission.id)}" alt="암호 카드" /><span>획득한 암호</span><strong>${mission.code}</strong></div>
     </div>
     ${nextMission ? `
       <div class="next-box next-qr-box">
@@ -370,9 +375,9 @@ function checkAnswer(stationId) {
         <div class="big-icon">🎉</div>
         <h2>정답입니다!</h2>
         <p>탐정님이 사건의 핵심 단서를 찾아냈어요.</p>
-        <div class="code-reveal code-asset"><img src="${ASSETS.passwordCard}" alt="암호 카드" /><span>암호 글자</span><strong>${mission.code}</strong></div>
-        <button class="primary-btn" onclick="completeMissionWithoutPhoto(${mission.id})">사진 없이 사건 완료하기</button>
-        <button class="secondary-btn" onclick="renderPhotoMission(${mission.id})">증거 사진 남기기 <span class="optional-label">선택</span></button>
+        <div class="code-reveal code-asset"><img src="${getCodeCardImage(mission.id)}" alt="암호 카드" /><span>암호 글자</span><strong>${mission.code}</strong></div>
+        <button class="primary-btn" onclick="renderPhotoMission(${mission.id})">증거 사진 남기기 <span class="optional-label">선택</span></button>
+        <button class="secondary-btn" onclick="completeMissionWithoutPhoto(${mission.id})">사진 없이 사건 완료하기</button>
       </div>
     `;
     launchConfetti();
@@ -403,7 +408,6 @@ function renderPhotoMission(stationId) {
           <img class="photo-frame-art" src="${ASSETS.photoFrame}" alt="증거 사진 프레임" />
           <h2>증거 사진을 남길까요?</h2>
           <p>${mission.photoMission}</p>
-          <p class="small-text center">사진 미션은 선택입니다. 사진 없이도 사건을 완료할 수 있습니다.</p>
         </div>
         <label class="camera-btn"><img src="${ASSETS.icons.camera}" alt="" /> 카메라로 사진 찍기
           <input type="file" accept="image/*" capture="environment" onchange="handlePhotoUpload(event, ${mission.id})" />
@@ -551,7 +555,7 @@ function renderMissionComplete(stationId) {
         <div class="badge">사건 해결</div>
         <h1>${mission.title}</h1>
         <p class="desc">사건 해결 기록이 저장되었습니다.</p>
-        <div class="code-reveal code-asset"><img src="${ASSETS.passwordCard}" alt="암호 카드" /><span>획득한 암호</span><strong>${mission.code}</strong></div>
+        <div class="code-reveal code-asset"><img src="${getCodeCardImage(mission.id)}" alt="암호 카드" /><span>획득한 암호</span><strong>${mission.code}</strong></div>
         ${nextMission ? `
           <div class="next-box next-qr-box">
             <h2>다음 QR 안내</h2>
@@ -583,7 +587,6 @@ function renderFinalScreen() {
   app.innerHTML = `
     <section class="screen">
       <div class="final-card pop certificate-screen">
-        <img class="certificate-art" src="${ASSETS.certificate}" alt="탐정 인증서" />
         <img class="badge-art final-badge" src="${ASSETS.badge}" alt="여름 숲 탐정 배지" />
         <div class="badge">MISSION COMPLETE</div>
         <h1>탐정 임무 완료!</h1>
@@ -593,6 +596,7 @@ function renderFinalScreen() {
           <strong>${escapeHtml(progress.teamName || "이름 없는 탐험대")}</strong>
         </div>
         <div class="final-code-box">최종 암호<strong>${finalCode}</strong></div>
+        <img class="certificate-art" src="${ASSETS.certificate}" alt="탐정 인증서" />
         <div class="time-box">완료 시각<br /><strong>${progress.completedAt}</strong></div>
         <div class="staff-box">화면을 캡쳐한 뒤,<br />기념품 교환 시 보여주세요.</div>
       </div>
