@@ -4,6 +4,27 @@ const PHOTO_UPLOAD_URL = "https://script.google.com/macros/s/AKfycbzSVkKJkZi27yP
 const PHOTO_MAX_WIDTH = 1400;
 const PHOTO_JPEG_QUALITY = 0.82;
 
+const ASSETS = {
+  logo: "assets/logo.png",
+  badge: "assets/badge.png",
+  certificate: "assets/certificate.png",
+  passwordCard: "assets/password-card.png",
+  photoFrame: "assets/photo-frame.png",
+  caseCards: [null, "assets/case01.png", "assets/case02.png", "assets/case03.png", "assets/case04.png", "assets/case05.png", "assets/case06.png"],
+  icons: {
+    home: "assets/icon-home.png",
+    back: "assets/icon-back.png",
+    save: "assets/icon-save.png",
+    lock: "assets/icon-lock.png",
+    code: "assets/icon-code.png",
+    leaf: "assets/icon-leaf.png",
+    footprint: "assets/icon-footprint.png",
+    camera: "assets/icon-camera.png",
+    folder: "assets/icon-folder.png",
+    search: "assets/icon-search.png"
+  }
+};
+
 let selectedChoice = null;
 let currentPhotoData = null;
 
@@ -77,12 +98,14 @@ function render() {
 function renderProgressBlock() {
   const progress = getProgress();
   const completedCount = progress.completed.length;
+  const percent = Math.round((completedCount / MISSIONS.length) * 100);
   return `
     <div class="progress-panel">
       <div class="progress-head">
-        <strong>탐정 진행상황</strong>
+        <div class="progress-title"><img src="${ASSETS.icons.folder}" alt="" /> <strong>사건파일 진행상황</strong></div>
         <span>${completedCount} / ${MISSIONS.length} 완료</span>
       </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div>
       <div class="mini-stamps">
         ${MISSIONS.map(mission => {
           const isDone = progress.completed.includes(mission.id);
@@ -91,6 +114,14 @@ function renderProgressBlock() {
       </div>
     </div>
   `;
+}
+
+function getCaseCardImage(id) {
+  return ASSETS.caseCards[id] || "";
+}
+
+function renderImageIcon(src, alt = "") {
+  return `<img class="inline-icon" src="${src}" alt="${alt}" />`;
 }
 
 function renderMain() {
@@ -108,10 +139,8 @@ function renderMain() {
 
   app.innerHTML = `
     <section class="screen">
-      <div class="hero-card">
-        <div class="leaf">🌿</div>
-        <div class="badge">국립과천과학관 곤충관</div>
-        <h1>여름숲탐정본부</h1>
+      <div class="hero-card paper-hero">
+        <img class="main-logo" src="${ASSETS.logo}" alt="여름숲탐정본부" />
         <p class="subtitle">암호를 해독하라</p>
         <p class="desc">생태공원 곳곳의 QR코드를 찾아 사건을 해결하고, 암호 글자를 모아 최종 암호를 완성해보세요.</p>
       </div>
@@ -119,7 +148,7 @@ function renderMain() {
       ${renderProgressBlock()}
 
       <div class="card notice-card">
-        <h2>사진 저장 안내</h2>
+        <h2>${renderImageIcon(ASSETS.icons.camera)} 증거 사진 안내</h2>
         <p class="small-text">사진 미션은 선택 참여입니다. 사진을 촬영한 경우에만 행사 운영 기록 및 과학관 아카이브용으로 Google Drive에 저장됩니다.</p>
         <p class="small-text"><strong>사진 참여 시 사람 얼굴이 나오지 않도록</strong> 자연물, 곤충, 식물, 풍경 위주로 촬영해주세요.</p>
       </div>
@@ -131,7 +160,7 @@ function renderMain() {
       </div>
 
       <div class="card">
-        <h2>암호 수집 현황</h2>
+        <h2>${renderImageIcon(ASSETS.icons.code)} 암호 수집 현황</h2>
         <div class="stamp-row">
           ${MISSIONS.map(mission => {
             const isDone = progress.completed.includes(mission.id);
@@ -142,7 +171,7 @@ function renderMain() {
       </div>
 
       <div class="card">
-        <h2>행사 테스트용 링크</h2>
+        <h2>${renderImageIcon(ASSETS.icons.footprint)} 행사 테스트용 링크</h2>
         <p class="small-text">실제 운영 시에는 각 장소의 QR코드로 접속합니다.</p>
         <div class="mission-link-list">
           ${MISSIONS.map(mission => `
@@ -161,10 +190,8 @@ function renderFirstGuide(targetStation = null, forceIntro = false) {
   const progress = getProgress();
   app.innerHTML = `
     <section class="screen">
-      <div class="hero-card guide-card">
-        <div class="leaf">🕵️‍♀️🌿</div>
-        <div class="badge">처음 오셨나요?</div>
-        <h1>여름숲탐정본부</h1>
+      <div class="hero-card guide-card paper-hero">
+        <img class="main-logo" src="${ASSETS.logo}" alt="여름숲탐정본부" />
         <p class="subtitle">암호를 해독하라</p>
         <p class="desc">생태공원에 숨겨진 6개의 QR코드를 찾아 사건을 해결하세요. 퀴즈를 맞히면 암호 글자를 얻을 수 있고, 증거 사진은 선택으로 남길 수 있습니다.</p>
         ${targetStation ? `
@@ -176,10 +203,10 @@ function renderFirstGuide(targetStation = null, forceIntro = false) {
       </div>
 
       <div class="card">
-        <h2>참여 방법</h2>
+        <h2>${renderImageIcon(ASSETS.icons.search)} 참여 방법</h2>
         <div class="guide-steps">
           <div><strong>1</strong><span>QR코드를 찾습니다.</span></div>
-          <div><strong>2</strong><span>사건 이야기를 읽고 퀴즈를 풉니다.</span></div>
+          <div><strong>2</strong><span>사건카드를 확인하고 퀴즈를 풉니다.</span></div>
           <div><strong>3</strong><span>정답을 맞히면 암호 글자를 얻습니다.</span></div>
           <div><strong>4</strong><span>증거 사진은 선택으로 남길 수 있습니다.</span></div>
           <div><strong>5</strong><span>6개 암호를 모아 직원에게 보여주세요.</span></div>
@@ -246,8 +273,9 @@ function renderStationIntro(stationId) {
   app.innerHTML = `
     <section class="screen">
       ${renderProgressBlock()}
-      <div class="case-card">
-        <div class="case-top">
+      <div class="case-card case-intro-card">
+        <img class="case-art" src="${getCaseCardImage(mission.id)}" alt="${mission.caseLabel} ${mission.title}" />
+        <div class="case-top overlay-top">
           <div>
             <div class="badge">${mission.zone}</div>
             <div class="badge light">${mission.caseLabel}</div>
@@ -257,7 +285,7 @@ function renderStationIntro(stationId) {
         <h1>${mission.title}</h1>
         <p class="desc">${mission.story}</p>
         ${isCompleted ? renderAlreadyCompletedBlock(mission) : `
-          <button class="primary-btn pulse" onclick="startMission(${mission.id})">사건 시작하기</button>
+          <button class="primary-btn pulse" onclick="startMission(${mission.id})">조사 시작하기</button>
           <button class="secondary-btn" onclick="goHome()">진행상황 보기</button>
         `}
       </div>
@@ -272,7 +300,7 @@ function renderAlreadyCompletedBlock(mission) {
       <div class="big-icon">✅</div>
       <h2>이미 해결한 사건입니다</h2>
       <p>탐정 기록을 확인했습니다.</p>
-      <div class="code-reveal small">획득한 암호<strong>${mission.code}</strong></div>
+      <div class="code-reveal small code-asset"><img src="${ASSETS.passwordCard}" alt="암호 카드" /><span>획득한 암호</span><strong>${mission.code}</strong></div>
     </div>
     ${nextMission ? `
       <div class="next-box next-qr-box">
@@ -300,7 +328,7 @@ function startMission(stationId) {
   app.innerHTML = `
     <section class="screen">
       ${renderProgressBlock()}
-      <div class="case-card">
+      <div class="case-card quiz-card">
         <div class="case-top">
           <div>
             <div class="badge">${mission.zone}</div>
@@ -308,6 +336,7 @@ function startMission(stationId) {
           </div>
           <div class="case-number">${mission.id}/6</div>
         </div>
+        <img class="case-thumb" src="${getCaseCardImage(mission.id)}" alt="${mission.caseLabel}" />
         <h1>${mission.title}</h1>
         <div class="question-box"><p class="question">${mission.question}</p></div>
         <div class="choice-list">
@@ -341,7 +370,7 @@ function checkAnswer(stationId) {
         <div class="big-icon">🎉</div>
         <h2>정답입니다!</h2>
         <p>탐정님이 사건의 핵심 단서를 찾아냈어요.</p>
-        <div class="code-reveal">암호 글자<strong>${mission.code}</strong></div>
+        <div class="code-reveal code-asset"><img src="${ASSETS.passwordCard}" alt="암호 카드" /><span>암호 글자</span><strong>${mission.code}</strong></div>
         <button class="primary-btn" onclick="completeMissionWithoutPhoto(${mission.id})">사진 없이 사건 완료하기</button>
         <button class="secondary-btn" onclick="renderPhotoMission(${mission.id})">증거 사진 남기기 <span class="optional-label">선택</span></button>
       </div>
@@ -367,16 +396,16 @@ function renderPhotoMission(stationId) {
   app.innerHTML = `
     <section class="screen">
       ${renderProgressBlock()}
-      <div class="case-card">
+      <div class="case-card photo-card">
         <div class="badge">증거 사진 미션 · 선택</div>
         <h1>${mission.title}</h1>
         <div class="photo-mission-box">
-          <div class="big-icon">📷</div>
+          <img class="photo-frame-art" src="${ASSETS.photoFrame}" alt="증거 사진 프레임" />
           <h2>증거 사진을 남길까요?</h2>
           <p>${mission.photoMission}</p>
           <p class="small-text center">사진 미션은 선택입니다. 사진 없이도 사건을 완료할 수 있습니다.</p>
         </div>
-        <label class="camera-btn">카메라로 사진 찍기
+        <label class="camera-btn"><img src="${ASSETS.icons.camera}" alt="" /> 카메라로 사진 찍기
           <input type="file" accept="image/*" capture="environment" onchange="handlePhotoUpload(event, ${mission.id})" />
         </label>
         <div id="photoPreviewArea" class="photo-preview-area"><p class="small-text">사진을 찍으면 이곳에 미리보기가 나타납니다.</p></div>
@@ -518,11 +547,11 @@ function renderMissionComplete(stationId) {
     <section class="screen">
       ${renderProgressBlock()}
       <div class="case-card solved-card pop">
-        <div class="big-icon">🕵️‍♀️</div>
+        <img class="badge-art" src="${ASSETS.badge}" alt="여름 숲 탐정 배지" />
         <div class="badge">사건 해결</div>
         <h1>${mission.title}</h1>
         <p class="desc">사건 해결 기록이 저장되었습니다.</p>
-        <div class="code-reveal">획득한 암호<strong>${mission.code}</strong></div>
+        <div class="code-reveal code-asset"><img src="${ASSETS.passwordCard}" alt="암호 카드" /><span>획득한 암호</span><strong>${mission.code}</strong></div>
         ${nextMission ? `
           <div class="next-box next-qr-box">
             <h2>다음 QR 안내</h2>
@@ -553,8 +582,9 @@ function renderFinalScreen() {
 
   app.innerHTML = `
     <section class="screen">
-      <div class="final-card pop">
-        <div class="big-icon">🏅</div>
+      <div class="final-card pop certificate-screen">
+        <img class="certificate-art" src="${ASSETS.certificate}" alt="탐정 인증서" />
+        <img class="badge-art final-badge" src="${ASSETS.badge}" alt="여름 숲 탐정 배지" />
         <div class="badge">MISSION COMPLETE</div>
         <h1>탐정 임무 완료!</h1>
         <p class="desc">여름숲탐정본부의 모든 사건을 해결했습니다.</p>
@@ -564,8 +594,7 @@ function renderFinalScreen() {
         </div>
         <div class="final-code-box">최종 암호<strong>${finalCode}</strong></div>
         <div class="time-box">완료 시각<br /><strong>${progress.completedAt}</strong></div>
-        <div class="staff-box">기념품 교환 시<br />이 화면을 보여주세요.</div>
-        <p class="small-text center">화면을 캡쳐한 뒤, 기념품 교환 시 보여주세요.</p>
+        <div class="staff-box">화면을 캡쳐한 뒤,<br />기념품 교환 시 보여주세요.</div>
       </div>
     </section>
   `;
