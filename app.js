@@ -10,6 +10,7 @@ const ASSETS = {
   certificate: "assets/certificate.png",
   passwordCard: "assets/password-card.png",
   photoFrame: "assets/photo-frame.png",
+  parkMap: "assets/park-map.png",
   caseCards: [null, "assets/case01.png", "assets/case02.png", "assets/case03.png", "assets/case04.png", "assets/case05.png", "assets/case06.png"],
   codeCards: [null, "assets/code01.png", "assets/code02.png", "assets/code03.png", "assets/code04.png", "assets/code05.png", "assets/code06.png"],
   icons: {
@@ -28,6 +29,13 @@ const ASSETS = {
 
 let selectedChoice = null;
 let currentPhotoData = null;
+
+const appScreenObserver = new MutationObserver(function() {
+  if (app.firstElementChild && app.firstElementChild.classList.contains("screen")) {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+});
+appScreenObserver.observe(app, { childList: true });
 
 function getProgress() {
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -129,6 +137,34 @@ function renderImageIcon(src, alt = "") {
   return `<img class="inline-icon" src="${src}" alt="${alt}" />`;
 }
 
+function renderParkMapBlock() {
+  const progress = getProgress();
+  const nextMission = getNextMission(0);
+
+  return `
+    <div class="card park-map-card fade-card">
+      <h2>${renderImageIcon(ASSETS.icons.footprint)} 생태공원 QR 지도</h2>
+      <p class="map-guide-text">현재 진행상황을 확인하고, 다음 QR 위치를 지도에서 찾아보세요.</p>
+      <div class="park-map-frame">
+        <img class="park-map-img" src="${ASSETS.parkMap}" alt="여름숲탐정본부 생태공원 QR 지도" loading="lazy" />
+      </div>
+      ${nextMission ? `
+        <div class="map-next-box">
+          <strong>다음 추천 사건</strong>
+          <span>${nextMission.caseLabel} · ${nextMission.title}</span>
+          <em>${nextMission.zone} 주변에서 QR을 찾아보세요.</em>
+        </div>
+      ` : `
+        <div class="map-next-box complete">
+          <strong>모든 사건 해결 완료</strong>
+          <span>최종 암호 화면을 직원에게 보여주세요.</span>
+        </div>
+      `}
+      <p class="small-text center">📍 다음 QR을 찾아 휴대폰 카메라로 스캔하세요.</p>
+    </div>
+  `;
+}
+
 function renderMain() {
   const progress = getProgress();
 
@@ -151,6 +187,7 @@ function renderMain() {
       </div>
 
       ${renderProgressBlock()}
+      ${renderParkMapBlock()}
 
       <div class="card notice-card">
         <h2>${renderImageIcon(ASSETS.icons.camera)} 증거 사진 안내</h2>

@@ -163,3 +163,134 @@ input[type="text"]:focus { border-color: var(--forest-2); box-shadow: 0 0 0 4px 
   .case-thumb { width: 86px; }
   .primary-btn, .secondary-btn, .camera-btn { padding: 14px 12px; }
 }
+
+
+/* v4.0-2: park map and lightweight UX polish */
+.screen {
+  animation: screenFadeIn .22s ease-out both;
+}
+
+.fade-card {
+  animation: softFadeIn .28s ease-out both;
+}
+
+button,
+.primary-btn,
+.secondary-btn,
+.camera-btn,
+.choice-btn,
+.mission-link-list a {
+  touch-action: manipulation;
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+}
+
+button:active,
+.primary-btn:active,
+.secondary-btn:active,
+.camera-btn:active,
+.choice-btn:active,
+.mission-link-list a:active {
+  transform: scale(.985);
+}
+
+.park-map-card {
+  padding: 18px;
+}
+
+.park-map-card h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.map-guide-text {
+  margin: 0 0 12px;
+  text-align: center;
+  color: var(--muted);
+  line-height: 1.55;
+  font-weight: 750;
+}
+
+.park-map-frame {
+  margin: 12px auto 14px;
+  padding: 8px;
+  border-radius: 22px;
+  background: #fffdf4;
+  border: 2px solid rgba(138,90,52,.18);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.55), 0 8px 16px rgba(72,55,29,.10);
+}
+
+.park-map-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+}
+
+.map-next-box {
+  margin: 12px 0 0;
+  padding: 14px;
+  border-radius: 18px;
+  background: #fff8d9;
+  border: 2px solid rgba(138,90,52,.14);
+  text-align: center;
+  color: var(--forest);
+}
+
+.map-next-box strong,
+.map-next-box span,
+.map-next-box em {
+  display: block;
+}
+
+.map-next-box strong {
+  font-size: 14px;
+  color: var(--brown);
+  margin-bottom: 4px;
+}
+
+.map-next-box span {
+  font-size: 17px;
+  font-weight: 950;
+  line-height: 1.4;
+}
+
+.map-next-box em {
+  margin-top: 4px;
+  font-style: normal;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.map-next-box.complete {
+  background: #e8f5dc;
+}
+
+@keyframes screenFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes softFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen, .fade-card, .pop, .pulse, .confetti {
+    animation: none !important;
+  }
+
+  button, .primary-btn, .secondary-btn, .camera-btn, .choice-btn, .mission-link-list a {
+    transition: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .park-map-card { padding: 14px; }
+  .park-map-frame { padding: 6px; border-radius: 18px; }
+  .park-map-img { border-radius: 13px; }
+}
