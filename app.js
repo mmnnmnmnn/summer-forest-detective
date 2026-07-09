@@ -79,14 +79,11 @@ function render() {
   const station = getStationFromUrl();
   const progress = getProgress();
 
-  if (station === 1 && !isAllCompleted()) {
-    renderFirstGuide(1, true);
-    return;
-  }
-
   if (station) {
-    if (!progress.hasSeenGuide && !isAllCompleted()) {
-      renderFirstGuide(station, false);
+    const isFirstQrVisit = !progress.hasSeenGuide && progress.completed.length === 0 && !isAllCompleted();
+
+    if (isFirstQrVisit) {
+      renderFirstGuide(station, true);
       return;
     }
 
@@ -203,19 +200,6 @@ function renderMain() {
           }).join("")}
         </div>
         <p class="small-text">QR코드를 스캔하면 해당 사건이 열립니다.</p>
-      </div>
-
-      <div class="card">
-        <h2>${renderImageIcon(ASSETS.icons.footprint)} 행사 테스트용 링크</h2>
-        <p class="small-text">실제 운영 시에는 각 장소의 QR코드로 접속합니다.</p>
-        <div class="mission-link-list">
-          ${MISSIONS.map(mission => `
-            <a href="index.html?station=${mission.id}">
-              ${mission.zone ? `<span>${mission.zone}</span>` : ""}
-              ${mission.caseLabel} ${mission.title}
-            </a>
-          `).join("")}
-        </div>
       </div>
     </section>
   `;
