@@ -30,13 +30,6 @@ const ASSETS = {
 let selectedChoice = null;
 let currentPhotoData = null;
 
-const appScreenObserver = new MutationObserver(function() {
-  if (app.firstElementChild && app.firstElementChild.classList.contains("screen")) {
-    window.scrollTo({ top: 0, behavior: "instant" });
-  }
-});
-appScreenObserver.observe(app, { childList: true });
-
 function getProgress() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (!saved) return { teamName: "", completed: [], hasSeenGuide: false, completedAt: "", photoUploads: {} };
@@ -125,6 +118,32 @@ function renderProgressBlock() {
   `;
 }
 
+function renderParkMapBlock(currentId = null) {
+  const nextMission = getNextMission(currentId);
+  return `
+    <div class="card map-card fade-in-soft">
+      <h2>${renderImageIcon(ASSETS.icons.footprint)} 생태공원 QR 지도</h2>
+      <p class="map-lead">현재 진행상황을 확인하고, 다음 QR 위치를 지도에서 찾아보세요.</p>
+      <div class="park-map-wrap">
+        <img class="park-map-img" src="${ASSETS.parkMap}" alt="여름숲탐정본부 생태공원 QR 지도" loading="lazy" />
+      </div>
+      ${nextMission ? `
+        <div class="map-next-box">
+          <strong>다음 추천 사건</strong>
+          <span>${nextMission.caseLabel} · ${nextMission.title}</span>
+          <p>${nextMission.zone} 주변에서 QR을 찾아보세요.</p>
+        </div>
+      ` : `
+        <div class="map-next-box done">
+          <strong>모든 사건을 해결했습니다.</strong>
+          <p>최종 암호 화면을 직원에게 보여주세요.</p>
+        </div>
+      `}
+      <p class="small-text center">📍 다음 QR을 찾아 휴대폰 카메라로 스캔하세요.</p>
+    </div>
+  `;
+}
+
 function getCaseCardImage(id) {
   return ASSETS.caseCards[id] || "";
 }
@@ -137,35 +156,8 @@ function renderImageIcon(src, alt = "") {
   return `<img class="inline-icon" src="${src}" alt="${alt}" />`;
 }
 
-function renderParkMapBlock() {
-  const progress = getProgress();
-  const nextMission = getNextMission(0);
-
-  return `
-    <div class="card park-map-card fade-card">
-      <h2>${renderImageIcon(ASSETS.icons.footprint)} 생태공원 QR 지도</h2>
-      <p class="map-guide-text">현재 진행상황을 확인하고, 다음 QR 위치를 지도에서 찾아보세요.</p>
-      <div class="park-map-frame">
-        <img class="park-map-img" src="${ASSETS.parkMap}" alt="여름숲탐정본부 생태공원 QR 지도" loading="lazy" />
-      </div>
-      ${nextMission ? `
-        <div class="map-next-box">
-          <strong>다음 추천 사건</strong>
-          <span>${nextMission.caseLabel} · ${nextMission.title}</span>
-          <em>${nextMission.zone} 주변에서 QR을 찾아보세요.</em>
-        </div>
-      ` : `
-        <div class="map-next-box complete">
-          <strong>모든 사건 해결 완료</strong>
-          <span>최종 암호 화면을 직원에게 보여주세요.</span>
-        </div>
-      `}
-      <p class="small-text center">📍 다음 QR을 찾아 휴대폰 카메라로 스캔하세요.</p>
-    </div>
-  `;
-}
-
 function renderMain() {
+  scrollToTop();
   const progress = getProgress();
 
   if (isAllCompleted()) {
@@ -187,6 +179,7 @@ function renderMain() {
       </div>
 
       ${renderProgressBlock()}
+
       ${renderParkMapBlock()}
 
       <div class="card notice-card">
@@ -229,6 +222,7 @@ function renderMain() {
 }
 
 function renderFirstGuide(targetStation = null, forceIntro = false) {
+  scrollToTop();
   const progress = getProgress();
   app.innerHTML = `
     <section class="screen">
@@ -300,6 +294,7 @@ function saveTeamName() {
 }
 
 function renderStationIntro(stationId) {
+  scrollToTop();
   const mission = MISSIONS.find(item => item.id === stationId);
   const progress = getProgress();
   const isCompleted = progress.completed.includes(stationId);
@@ -363,6 +358,7 @@ function renderAlreadyCompletedBlock(mission) {
 }
 
 function startMission(stationId) {
+  scrollToTop();
   selectedChoice = null;
   currentPhotoData = null;
   const mission = MISSIONS.find(item => item.id === stationId);
@@ -432,6 +428,7 @@ function checkAnswer(stationId) {
 }
 
 function renderPhotoMission(stationId) {
+  scrollToTop();
   const mission = MISSIONS.find(item => item.id === stationId);
   currentPhotoData = null;
 
@@ -581,6 +578,7 @@ function markMissionCompleted(stationId, photoInfo = {}) {
 }
 
 function renderMissionComplete(stationId) {
+  scrollToTop();
   const mission = MISSIONS.find(item => item.id === stationId);
   const nextMission = getNextMission(stationId);
 
@@ -613,6 +611,7 @@ function renderMissionComplete(stationId) {
 }
 
 function renderFinalScreen() {
+  scrollToTop();
   const progress = getProgress();
   const finalCode = getFinalCode();
 
@@ -723,6 +722,10 @@ function launchConfetti() {
     document.body.appendChild(confetti);
     setTimeout(() => confetti.remove(), 1800);
   }
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function escapeHtml(value) {
