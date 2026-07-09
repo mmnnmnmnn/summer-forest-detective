@@ -131,7 +131,7 @@ function renderParkMapBlock(currentId = null) {
         <div class="map-next-box">
           <strong>다음 추천 사건</strong>
           <span>${nextMission.caseLabel} · ${nextMission.title}</span>
-          <p>${nextMission.zone} 주변에서 QR을 찾아보세요.</p>
+          <p>${nextMission.zone ? nextMission.zone + " 주변에서" : "지도에서"} QR을 찾아보세요.</p>
         </div>
       ` : `
         <div class="map-next-box done">
@@ -211,7 +211,7 @@ function renderMain() {
         <div class="mission-link-list">
           ${MISSIONS.map(mission => `
             <a href="index.html?station=${mission.id}">
-              <span>${mission.zone}</span>
+              ${mission.zone ? `<span>${mission.zone}</span>` : ""}
               ${mission.caseLabel} ${mission.title}
             </a>
           `).join("")}
@@ -314,7 +314,7 @@ function renderStationIntro(stationId) {
         <img class="case-art" src="${getCaseCardImage(mission.id)}" alt="${mission.caseLabel} ${mission.title}" />
         <div class="case-top overlay-top">
           <div>
-            <div class="badge">${mission.zone}</div>
+            ${mission.zone ? `<div class="badge">${mission.zone}</div>` : ""}
             <div class="badge light">${mission.caseLabel}</div>
           </div>
           <div class="case-number">${mission.id}/6</div>
@@ -344,7 +344,7 @@ function renderAlreadyCompletedBlock(mission) {
         <h2>다음 QR 안내</h2>
         <p>이 사건은 이미 해결했어요. 아직 해결하지 않은 다음 QR을 찾아가면 됩니다.</p>
         <p class="next-title">👉 ${nextMission.caseLabel} ${nextMission.title}</p>
-        <p class="location-hint">📍 ${nextMission.zone} 주변에서 다음 단서를 찾아보세요.</p>
+        <p class="location-hint">📍 ${nextMission.zone ? nextMission.zone + " 주변에서" : "지도에서"} 다음 단서를 찾아보세요.</p>
         <p class="small-text">QR을 스캔하면 다음 사건 화면이 열립니다.</p>
       </div>
     ` : `
@@ -369,7 +369,7 @@ function startMission(stationId) {
       <div class="case-card quiz-card">
         <div class="case-top">
           <div>
-            <div class="badge">${mission.zone}</div>
+            ${mission.zone ? `<div class="badge">${mission.zone}</div>` : ""}
             <div class="badge light">${mission.caseLabel}</div>
           </div>
           <div class="case-number">${mission.id}/6</div>
@@ -596,7 +596,7 @@ function renderMissionComplete(stationId) {
             <h2>다음 QR 안내</h2>
             <p>${mission.nextGuide}</p>
             <p class="next-title">다음 목표: ${nextMission.caseLabel} ${nextMission.title}</p>
-            <p class="location-hint">📍 ${nextMission.zone} 주변에서 QR을 찾아보세요.</p>
+            <p class="location-hint">📍 ${nextMission.zone ? nextMission.zone + " 주변에서" : "지도에서"} QR을 찾아보세요.</p>
           </div>
         ` : `
           <div class="next-box next-qr-box">
